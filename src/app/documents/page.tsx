@@ -1,12 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { useApi } from "@/lib/hooks";
 import { Plus, FileText, Download, CheckCircle } from "lucide-react";
+import { DocumentForm } from "@/components/DocumentForm";
 
 interface Document {
   id: string; dealId: string; name: string; type: string;
+  content?: string;
   signed: boolean; signedAt: string | null; createdAt: string;
   deal?: { title: string }; template?: { name: string };
+}
+
+function openDocument(doc: Document) {
+  const win = window.open("", "_blank");
+  if (!win) return;
+  win.document.write(`<!DOCTYPE html><html><head><title>${doc.name}</title></head><body style="font-family:sans-serif;max-width:800px;margin:2rem auto;padding:0 1rem;">${doc.content || "<p>No content available.</p>"}</body></html>`);
+  win.document.close();
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -22,14 +32,21 @@ const TEMPLATES = [
 ];
 
 export default function DocumentsPage() {
-  const { data, loading } = useApi<{ documents: Document[] }>("/api/documents?orgId=org_demo");
+  const { data, loading, refetch } = useApi<{ documents: Document[] }>("/api/documents?orgId=org_demo");
   const documents = data?.documents || [];
+  const [showForm, setShowForm] = useState(false);
+  const [defaultType, setDefaultType] = useState("PURCHASE_AGREEMENT");
+
+  const openGenerator = (type = "PURCHASE_AGREEMENT") => {
+    setDefaultType(type);
+    setShowForm(true);
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div><h2 className="text-2xl font-bold">Documents</h2><p className="text-sm text-zinc-500 mt-1">Contracts, agreements, and templates</p></div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black text-sm font-medium rounded-md hover:bg-zinc-200 transition-colors"><Plus className="h-4 w-4" /> Generate Document</button>
+        <button onClick={() => openGenerator()} className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black text-sm font-medium rounded-md hover:bg-zinc-200 transition-colors"><Plus className="h-4 w-4" /> Generate Document</button>
       </div>
 
       {loading ? (
@@ -39,7 +56,7 @@ export default function DocumentsPage() {
           <FileText className="h-8 w-8 text-zinc-600 mx-auto mb-3" />
           <h3 className="text-sm font-medium text-zinc-400">No documents yet</h3>
           <p className="text-xs text-zinc-600 mt-1 mb-4">Documents are generated from deals.</p>
-          <code className="text-xs bg-zinc-800 px-2 py-1 rounded">POST /api/documents {"{ dealId, type }"}</code>
+          <button onClick={() => openGenerator()} className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black text-sm font-medium rounded-md hover:bg-zinc-200 transition-colors"><Plus className="h-4 w-4" /> Generate Document</button>
         </div>
       ) : (
         <div className="space-y-2">
@@ -51,7 +68,7 @@ export default function DocumentsPage() {
               </div>
               <div className="flex items-center gap-3">
                 {doc.signed ? <span className="flex items-center gap-1 text-xs text-emerald-400"><CheckCircle className="h-3 w-3" /> Signed</span> : <span className="text-xs text-zinc-500">Unsigned</span>}
-                <button className="p-2 text-zinc-500 hover:text-zinc-300 rounded-md hover:bg-zinc-800"><Download className="h-4 w-4" /></button>
+                <button onClick={() => openDocument(doc)} title="Open / download" className="p-2 text-zinc-500 hover:text-zinc-300 rounded-md hover:bg-zinc-800"><Download className="h-4 w-4" /></button>
               </div>
             </div>
           ))}
@@ -62,13 +79,15 @@ export default function DocumentsPage() {
         <h3 className="text-sm font-medium text-zinc-400 mb-3">Document Templates</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {TEMPLATES.map((template) => (
-            <div key={template.type} className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 cursor-pointer hover:border-zinc-700 transition-colors">
+            <div key={template.type} onClick={() => openGenerator(template.type)} className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 cursor-pointer hover:border-zinc-700 transition-colors">
               <div className="flex items-center gap-2 mb-2"><FileText className="h-4 w-4 text-zinc-500" /><span className="text-sm font-medium">{template.name}</span></div>
               <p className="text-xs text-zinc-500">{template.desc}</p>
             </div>
           ))}
         </div>
       </div>
+
+      <DocumentForm open={showForm} onClose={() => setShowForm(false)} onCreated={() => refetch()} defaultType={defaultType} />
     </div>
   );
 }
