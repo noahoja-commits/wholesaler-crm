@@ -78,7 +78,7 @@ export function Sidebar() {
             <div className="absolute inset-0 h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse-ring" />
           </div>
           <div className="text-xs">
-            <p className="font-medium text-[var(--color-text-primary)]">Sunbelt Wholesale</p>
+            <p className="font-medium text-[var(--color-text-primary)]">Lone Star Property</p>
             <p className="text-[var(--color-text-tertiary)]">Connected · Live</p>
           </div>
         </div>

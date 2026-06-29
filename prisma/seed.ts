@@ -22,11 +22,11 @@ async function main() {
   // ─── Organization ───────────────────────────────────────────────
   const org = await prisma.organization.upsert({
     where: { id: orgId },
-    update: {},
+    update: { name: "Lone Star Property Solutions LLC" },
     create: {
       id: orgId,
-      name: "Sunbelt Wholesale Properties",
-      slug: "sunbelt",
+      name: "Lone Star Property Solutions LLC",
+      slug: "lonestar",
     },
   });
   console.log(`  ✓ Organization: ${org.name}`);
@@ -58,21 +58,21 @@ async function main() {
   // ─── Contacts: Sellers ──────────────────────────────────────────
   const sellers = await Promise.all(
     [
-      { firstName: "Robert", lastName: "Martinez", phone: "512-555-0101", email: "rmartinez@email.com", city: "Austin", state: "TX", source: "DIRECT_MAIL" as const },
-      { firstName: "Sharon", lastName: "Williams", phone: "281-555-0102", email: "swilliams@email.com", city: "Houston", state: "TX", source: "COLD_CALL" as const },
-      { firstName: "Michael", lastName: "Johnson", phone: "214-555-0103", email: "mjohnson@email.com", city: "Dallas", state: "TX", source: "COUNTY_RECORDS" as const },
-      { firstName: "Linda", lastName: "Davis", phone: "210-555-0104", email: "ldavis@email.com", city: "San Antonio", state: "TX", source: "DRIVING_FOR_DOLLARS" as const },
-      { firstName: "James", lastName: "Brown", phone: "713-555-0105", email: "jbrown@email.com", city: "Houston", state: "TX", source: "PROPSTREAM" as const },
-      { firstName: "Patricia", lastName: "Garcia", phone: "817-555-0106", email: "pgarcia@email.com", city: "Fort Worth", state: "TX", source: "REFERRAL" as const },
-      { firstName: "David", lastName: "Miller", phone: "972-555-0107", email: "dmiller@email.com", city: "Plano", state: "TX", source: "DIRECT_MAIL" as const },
-      { firstName: "Jennifer", lastName: "Wilson", phone: "832-555-0108", email: "jwilson@email.com", city: "Katy", state: "TX", source: "SMS" as const },
+      { firstName: "Gregory", lastName: "Thornton", phone: "512-432-7891", email: "gthornton@gmail.com", city: "Austin", state: "TX", source: "DIRECT_MAIL" as const, notes: "Inherited property, needs to sell quickly. Out of state owner." },
+      { firstName: "Melissa", lastName: "Crosswell", phone: "281-658-2341", email: "mcrosswell@yahoo.com", city: "Houston", state: "TX", source: "COUNTY_RECORDS" as const, notes: "Pre-foreclosure notice filed Jan 2026. Behind 6 months on mortgage." },
+      { firstName: "Ronald", lastName: "Bishop", phone: "214-398-4567", email: "rbishop@outlook.com", city: "Dallas", state: "TX", source: "COLD_CALL" as const, notes: "Vacant rental property, tired landlord. Owns 3 other properties." },
+      { firstName: "Cynthia", lastName: "Velasquez", phone: "210-845-9023", email: "cvelasquez@hotmail.com", city: "San Antonio", state: "TX", source: "DRIVING_FOR_DOLLARS" as const, notes: "Overgrown yard, boarded windows. Neighbor says owner moved to nursing home." },
+      { firstName: "Darryl", lastName: "Hughes", phone: "713-267-3489", email: "dhughes.construction@email.com", city: "Houston", state: "TX", source: "PROPSTREAM" as const, notes: "Contractor who over-leveraged. Has 2 properties he needs to unload." },
+      { firstName: "Anita", lastName: "Ramirez", phone: "817-543-6712", email: "aramirez@icloud.com", city: "Fort Worth", state: "TX", source: "REFERRAL" as const, notes: "Referred by title company. Going through divorce, needs fast close." },
+      { firstName: "Lawrence", lastName: "Foster", phone: "972-319-8845", email: "lfoster@sbcglobal.net", city: "Plano", state: "TX", source: "DIRECT_MAIL" as const, notes: "Responded to yellow letter campaign. Underwater on mortgage since 2024." },
+      { firstName: "Elaine", lastName: "Whitfield", phone: "832-776-1590", email: "ewhitfield@protonmail.com", city: "Katy", state: "TX", source: "SMS" as const, notes: "Responded to SMS blast. Relocating for work, needs to sell within 30 days." },
     ].map((s) =>
       prisma.contact.create({
         data: {
           organizationId: orgId,
           type: "SELLER",
           status: "ACTIVE",
-          tags: ["motivated", s.source === "COUNTY_RECORDS" ? "pre-foreclosure" : "warm"],
+          tags: ["motivated", s.source === "COUNTY_RECORDS" ? "pre-foreclosure" : s.source === "PROPSTREAM" ? "distressed" : "warm"],
           ...s,
         },
       })
@@ -83,18 +83,18 @@ async function main() {
   // ─── Contacts: Cash Buyers ──────────────────────────────────────
   const buyers = await Promise.all(
     [
-      { firstName: "Marcus", lastName: "Chen", phone: "512-555-0201", email: "mchen@email.com", city: "Austin", state: "TX" },
-      { firstName: "Angela", lastName: "Thompson", phone: "713-555-0202", email: "athompson@email.com", city: "Houston", state: "TX" },
-      { firstName: "Kevin", lastName: "Rodriguez", phone: "214-555-0203", email: "krodriguez@email.com", city: "Dallas", state: "TX" },
-      { firstName: "Tanya", lastName: "Patel", phone: "281-555-0204", email: "tpatel@email.com", city: "Sugar Land", state: "TX" },
-      { firstName: "Derrick", lastName: "Washington", phone: "210-555-0205", email: "dwashington@email.com", city: "San Antonio", state: "TX" },
+      { firstName: "Harrison", lastName: "Kemp", phone: "512-998-4500", email: "hkemp@kempcapital.com", city: "Austin", state: "TX", notes: "Runs Kemp Capital LLC. Buys 10-15 properties/year in Travis & Williamson counties." },
+      { firstName: "Valerie", lastName: "Okonkwo", phone: "713-521-8876", email: "vokonkwo@vnproperties.com", city: "Houston", state: "TX", notes: "Nigerian-American investor. Prefers NW Houston and Katy. Closes in 7 days cash." },
+      { firstName: "Brett", lastName: "Callahan", phone: "214-665-3378", email: "brett@callahanholdings.com", city: "Dallas", state: "TX", notes: "Institutional buyer for Callahan Holdings. Buys portfolios of 3+ properties. All cash." },
+      { firstName: "Priya", lastName: "Mehta", phone: "281-445-9912", email: "priya@mehtainvestments.com", city: "Sugar Land", state: "TX", notes: "Physician building rental portfolio. 1031 exchange buyer. Prefers turnkey or light rehab." },
+      { firstName: "Marcus", lastName: "DeSantis", phone: "210-763-2201", email: "marcus@alamocityre.com", city: "San Antonio", state: "TX", notes: "Owns Alamo City RE LLC. Specializes in BRRRR method. Needs 70% ARV or better." },
     ].map((b) =>
       prisma.contact.create({
         data: {
           organizationId: orgId,
           type: "BUYER",
           status: "ACTIVE",
-          tags: ["cash-buyer", "repeat"],
+          tags: ["cash-buyer", "verified-funds"],
           ...b,
         },
       })
@@ -118,14 +118,15 @@ async function main() {
   await prisma.contact.create({
     data: {
       organizationId: orgId,
-      firstName: "Lone Star",
-      lastName: "Title Co",
+      firstName: "Texas National",
+      lastName: "Title Group",
       type: "TITLE_COMPANY",
       status: "ACTIVE",
-      phone: "512-555-0300",
-      email: "closings@lonestartitle.com",
+      phone: "512-454-8900",
+      email: "closings@texasnationaltitle.com",
       city: "Austin",
       state: "TX",
+      notes: "Preferred closing agent. $750 flat fee for wholesale double-closes.",
     },
   });
   console.log(`  ✓ Title Company: 1 contact`);
@@ -133,14 +134,14 @@ async function main() {
   // ─── Properties ─────────────────────────────────────────────────
   const properties = await Promise.all(
     [
-      { street: "1423 Oak Hollow Dr", city: "Austin", state: "TX", zip: "78745", beds: 3, baths: 2, sqft: 1650, arv: 385000, repairCost: 42000, foreclosureStatus: "NONE" as const, status: "NEW_LEAD" as const, contactId: sellers[0].id },
-      { street: "2810 Maple Ridge Ln", city: "Houston", state: "TX", zip: "77084", beds: 4, baths: 2.5, sqft: 2100, arv: 310000, repairCost: 35000, foreclosureStatus: "PRE_FORECLOSURE" as const, status: "CONTACTED" as const, contactId: sellers[1].id },
-      { street: "4509 Elmwood Ave", city: "Dallas", state: "TX", zip: "75216", beds: 3, baths: 1, sqft: 1200, arv: 225000, repairCost: 28000, foreclosureStatus: "NONE" as const, status: "OFFER_MADE" as const, contactId: sellers[2].id },
-      { street: "723 Pinehurst Ct", city: "San Antonio", state: "TX", zip: "78249", beds: 4, baths: 3, sqft: 2400, arv: 420000, repairCost: 55000, foreclosureStatus: "AUCTION_SCHEDULED" as const, status: "APPOINTMENT_DONE" as const, contactId: sellers[3].id },
-      { street: "1502 Bayou Bend", city: "Houston", state: "TX", zip: "77008", beds: 2, baths: 1, sqft: 950, arv: 195000, repairCost: 22000, foreclosureStatus: "NONE" as const, status: "NEW_LEAD" as const, contactId: sellers[4].id },
-      { street: "9832 Stone Creek Rd", city: "Fort Worth", state: "TX", zip: "76116", beds: 3, baths: 2, sqft: 1750, arv: 290000, repairCost: 38000, foreclosureStatus: "SHORT_SALE" as const, status: "CONTACTED" as const, contactId: sellers[5].id },
-      { street: "2201 Lakeside Dr", city: "Plano", state: "TX", zip: "75074", beds: 5, baths: 3.5, sqft: 3200, arv: 550000, repairCost: 75000, foreclosureStatus: "NONE" as const, status: "APPOINTMENT_SCHEDULED" as const, contactId: sellers[6].id },
-      { street: "408 Willow Way", city: "Katy", state: "TX", zip: "77494", beds: 3, baths: 2, sqft: 1550, arv: 275000, repairCost: 24000, foreclosureStatus: "BANK_OWNED" as const, status: "OFFER_MADE" as const, contactId: sellers[7].id },
+      { street: "1423 Oak Hollow Dr", city: "Austin", state: "TX", zip: "78745", beds: 3, baths: 2, sqft: 1650, arv: 385000, repairCost: 42000, foreclosureStatus: "NONE" as const, status: "NEW_LEAD" as const, contactId: sellers[0].id, notes: "Out-of-state owner. Tenant-occupied, month-to-month. Showing requires 24hr notice." },
+      { street: "2810 Maple Ridge Ln", city: "Houston", state: "TX", zip: "77084", beds: 4, baths: 2, sqft: 2150, arv: 310000, repairCost: 47000, foreclosureStatus: "PRE_FORECLOSURE" as const, status: "CONTACTED" as const, contactId: sellers[1].id, notes: "Auction date set for Aug 15. Seller owes $178K. Payoff quote obtained." },
+      { street: "4509 Elmwood Ave", city: "Dallas", state: "TX", zip: "75216", beds: 3, baths: 1, sqft: 1250, arv: 225000, repairCost: 32000, foreclosureStatus: "NONE" as const, status: "OFFER_MADE" as const, contactId: sellers[2].id, notes: "Vacant 14 months. Foundation issues noted. Offer of $127K submitted, awaiting response." },
+      { street: "723 Pinehurst Ct", city: "San Antonio", state: "TX", zip: "78249", beds: 4, baths: 3, sqft: 2450, arv: 420000, repairCost: 68000, foreclosureStatus: "AUCTION_SCHEDULED" as const, status: "APPOINTMENT_DONE" as const, contactId: sellers[3].id, notes: "Estate sale. Trustee wants all-cash close. Walkthrough completed Jun 22. Roof needs replacement." },
+      { street: "1502 Bayou Bend Dr", city: "Houston", state: "TX", zip: "77008", beds: 2, baths: 1, sqft: 980, arv: 210000, repairCost: 25000, foreclosureStatus: "NONE" as const, status: "NEW_LEAD" as const, contactId: sellers[4].id, notes: "Investor-owned. Seller has 2 properties to package. Will discount if both bought together." },
+      { street: "9832 Stone Creek Rd", city: "Fort Worth", state: "TX", zip: "76116", beds: 3, baths: 2, sqft: 1780, arv: 290000, repairCost: 38000, foreclosureStatus: "SHORT_SALE" as const, status: "CONTACTED" as const, contactId: sellers[5].id, notes: "BofA short sale. Attorney involved. Expect 90-120 day timeline. Comps support ARV." },
+      { street: "2201 Lakeside Dr", city: "Plano", state: "TX", zip: "75074", beds: 5, baths: 3, sqft: 3350, arv: 575000, repairCost: 82000, foreclosureStatus: "NONE" as const, status: "APPOINTMENT_SCHEDULED" as const, contactId: sellers[6].id, notes: "High-end property. Seller underwater since 2024. Walkthrough scheduled Jul 8." },
+      { street: "408 Willow Way", city: "Katy", state: "TX", zip: "77494", beds: 3, baths: 2, sqft: 1625, arv: 285000, repairCost: 29000, foreclosureStatus: "BANK_OWNED" as const, status: "OFFER_MADE" as const, contactId: sellers[7].id, notes: "Wells Fargo REO. Listed 45 days. First offer rejected. Revised offer pending." },
     ].map((p) => {
       const mao = p.arv * 0.7 - p.repairCost;
       return prisma.property.create({
@@ -158,14 +159,14 @@ async function main() {
 
   // ─── Deals ──────────────────────────────────────────────────────
   const dealsData = [
-    { propertyId: properties[0].id, sellerId: sellers[0].id, title: "Oak Hollow Flip", currentStage: "lead", dealType: "WHOLESALE" as const, offerPrice: 227500, priority: "MEDIUM" as const },
-    { propertyId: properties[1].id, sellerId: sellers[1].id, title: "Maple Ridge Pre-FC", currentStage: "contacted", dealType: "WHOLESALE" as const, offerPrice: 182000, priority: "HIGH" as const },
-    { propertyId: properties[2].id, sellerId: sellers[2].id, title: "Elmwood Starter", currentStage: "offer", dealType: "WHOLE_TAIL" as const, offerPrice: 129500, contractPrice: 135000, assignmentFee: 15000, priority: "HIGH" as const },
-    { propertyId: properties[3].id, sellerId: sellers[3].id, title: "Pinehurst Estate", currentStage: "appointment", dealType: "WHOLESALE" as const, offerPrice: 239000, priority: "URGENT" as const },
-    { propertyId: properties[4].id, sellerId: sellers[4].id, title: "Bayou Cottage", currentStage: "lead", dealType: "FIX_AND_FLIP" as const, offerPrice: 114500, priority: "LOW" as const },
-    { propertyId: properties[5].id, sellerId: sellers[5].id, title: "Stone Creek Short Sale", currentStage: "contract", dealType: "WHOLESALE" as const, offerPrice: 165000, contractPrice: 172000, assignmentFee: 20000, priority: "URGENT" as const },
-    { propertyId: properties[6].id, sellerId: sellers[6].id, title: "Lakeside Luxury", currentStage: "appointment", dealType: "WHOLE_TAIL" as const, offerPrice: 310000, priority: "MEDIUM" as const },
-    { propertyId: properties[7].id, sellerId: sellers[7].id, title: "Willow Way REO", currentStage: "closing", dealType: "WHOLESALE" as const, offerPrice: 168500, contractPrice: 175000, assignmentFee: 18000, closingDate: new Date("2026-07-15"), priority: "HIGH" as const, buyerId: buyers[1].id },
+    { propertyId: properties[0].id, sellerId: sellers[0].id, title: "Oak Hollow — Out of State Seller", currentStage: "lead", dealType: "WHOLESALE" as const, offerPrice: 227500, priority: "MEDIUM" as const, notes: "Mailer response. Seller inherited property, lives in California." },
+    { propertyId: properties[1].id, sellerId: sellers[1].id, title: "Maple Ridge Pre-FC — Aug Auction", currentStage: "contacted", dealType: "WHOLESALE" as const, offerPrice: 170000, priority: "HIGH" as const, notes: "Time-sensitive. Auction Aug 15. Need to move fast on this one." },
+    { propertyId: properties[2].id, sellerId: sellers[2].id, title: "Elmwood — Tired Landlord Portfolio", currentStage: "offer", dealType: "WHOLE_TAIL" as const, offerPrice: 129500, contractPrice: 135000, assignmentFee: 15500, priority: "HIGH" as const, notes: "Offer submitted. Seller countering. He wants to sell all 3 properties as a package." },
+    { propertyId: properties[3].id, sellerId: sellers[3].id, title: "Pinehurst Estate Sale", currentStage: "appointment", dealType: "WHOLESALE" as const, offerPrice: 226000, priority: "URGENT" as const, notes: "Trustee motivated. Walkthrough done. Comps pulled. Needs $68K rehab — roof, HVAC, floors." },
+    { propertyId: properties[4].id, sellerId: sellers[4].id, title: "Bayou Bend — Contractor 2-Property Package", currentStage: "lead", dealType: "FIX_AND_FLIP" as const, offerPrice: 122000, priority: "LOW" as const, notes: "Low priority unless he packages both. Second property at 3510 Westview needs eval." },
+    { propertyId: properties[5].id, sellerId: sellers[5].id, title: "Stone Creek Short Sale — BofA", currentStage: "contract", dealType: "WHOLESALE" as const, offerPrice: 165000, contractPrice: 172000, assignmentFee: 20000, priority: "URGENT" as const, notes: "Contract signed. Waiting on BofA approval. Buyer lined up — Callahan Holdings." },
+    { propertyId: properties[6].id, sellerId: sellers[6].id, title: "Lakeside Dr — Underwater Luxury", currentStage: "appointment", dealType: "WHOLE_TAIL" as const, offerPrice: 320500, priority: "MEDIUM" as const, notes: "High-end property. Walkthrough Jul 8. Comps $550-600K. Seller owes $410K." },
+    { propertyId: properties[7].id, sellerId: sellers[7].id, title: "Willow Way — Wells Fargo REO", currentStage: "closing", dealType: "WHOLESALE" as const, offerPrice: 170500, contractPrice: 176000, assignmentFee: 18500, closingDate: new Date("2026-07-28"), priority: "HIGH" as const, buyerId: buyers[1].id, notes: "Closing scheduled Jul 28. Title work cleared. Valerie Okonkwo is end buyer." },
   ];
 
   const deals = await Promise.all(
