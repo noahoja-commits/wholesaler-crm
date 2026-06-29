@@ -1,10 +1,11 @@
+import { DEFAULT_ORG } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
 // GET /api/campaigns — list campaigns
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const orgId = searchParams.get("orgId") || "default";
+  const orgId = searchParams.get("orgId") || DEFAULT_ORG;
 
   try {
     const campaigns = await prisma.campaign.findMany({
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     const campaign = await prisma.campaign.create({
       data: {
-        organizationId: body.organizationId || "default",
+        organizationId: body.organizationId || DEFAULT_ORG,
         name: body.name,
         type: body.type || "DIRECT_MAIL",
         status: body.status || "DRAFT",

@@ -1,3 +1,4 @@
+import { DEFAULT_ORG } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
@@ -9,7 +10,7 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json();
-    const orgId = body.organizationId || "default";
+    const orgId = body.organizationId || DEFAULT_ORG;
 
     const campaign = await prisma.campaign.findFirst({
       where: { id, organizationId: orgId },

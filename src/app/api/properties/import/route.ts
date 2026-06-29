@@ -1,3 +1,4 @@
+import { DEFAULT_ORG } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
@@ -5,7 +6,7 @@ import prisma from "@/lib/db";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { orgId = "default", dataSourceId, properties } = body;
+    const { orgId = DEFAULT_ORG, dataSourceId, properties } = body;
 
     if (!Array.isArray(properties) || properties.length === 0) {
       return NextResponse.json({ error: "No properties to import" }, { status: 400 });

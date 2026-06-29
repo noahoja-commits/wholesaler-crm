@@ -1,10 +1,11 @@
+import { DEFAULT_ORG } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
 // GET /api/data-sources — list data sources
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const orgId = searchParams.get("orgId") || "default";
+  const orgId = searchParams.get("orgId") || DEFAULT_ORG;
 
   try {
     const sources = await prisma.dataSource.findMany({
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const source = await prisma.dataSource.create({
       data: {
-        organizationId: body.organizationId || "default",
+        organizationId: body.organizationId || DEFAULT_ORG,
         name: body.name,
         type: body.type || "CSV_IMPORT",
         config: body.config || {},

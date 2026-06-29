@@ -1,10 +1,11 @@
+import { DEFAULT_ORG } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
 // GET /api/dashboard — aggregate stats for the org
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const orgId = searchParams.get("orgId") || "default";
+  const orgId = searchParams.get("orgId") || DEFAULT_ORG;
 
   try {
     const now = new Date();

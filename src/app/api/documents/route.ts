@@ -1,10 +1,11 @@
+import { DEFAULT_ORG } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
 // GET /api/documents — list documents
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const orgId = searchParams.get("orgId") || "default";
+  const orgId = searchParams.get("orgId") || DEFAULT_ORG;
   const dealId = searchParams.get("dealId");
 
   try {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { dealId, templateId, type = "OTHER", orgId = "default" } = body;
+    const { dealId, templateId, type = "OTHER", orgId = DEFAULT_ORG } = body;
 
     // Fetch deal with property, seller, buyer
     const deal = await prisma.deal.findFirst({

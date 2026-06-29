@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // ─── Contact ─────────────────────────────────────────────────────
 export const createContactSchema = z.object({
-  organizationId: z.string().optional().default("default"),
+  organizationId: z.string().optional().default("org_demo"),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email().optional().nullable(),
@@ -23,7 +23,7 @@ export type CreateContactInput = z.infer<typeof createContactSchema>;
 
 // ─── Property ────────────────────────────────────────────────────
 export const createPropertySchema = z.object({
-  organizationId: z.string().optional().default("default"),
+  organizationId: z.string().optional().default("org_demo"),
   contactId: z.string().optional().nullable(),
   street: z.string().min(1, "Street address is required"),
   city: z.string().min(1, "City is required"),
@@ -49,7 +49,7 @@ export type CreatePropertyInput = z.infer<typeof createPropertySchema>;
 
 // ─── Deal ────────────────────────────────────────────────────────
 export const createDealSchema = z.object({
-  organizationId: z.string().optional().default("default"),
+  organizationId: z.string().optional().default("org_demo"),
   pipelineId: z.string().min(1, "Pipeline is required"),
   propertyId: z.string().min(1, "Property is required"),
   sellerId: z.string().min(1, "Seller is required"),

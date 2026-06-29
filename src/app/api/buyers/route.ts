@@ -1,10 +1,11 @@
+import { DEFAULT_ORG } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
 // GET /api/buyers — list buyers (contacts with type=BUYER) and their preferences
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const orgId = searchParams.get("orgId") || "default";
+  const orgId = searchParams.get("orgId") || DEFAULT_ORG;
 
   try {
     const buyers = await prisma.contact.findMany({

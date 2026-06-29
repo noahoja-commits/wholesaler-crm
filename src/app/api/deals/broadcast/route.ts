@@ -1,3 +1,4 @@
+import { DEFAULT_ORG } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
@@ -5,7 +6,7 @@ import prisma from "@/lib/db";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { dealId, orgId = "default" } = body;
+    const { dealId, orgId = DEFAULT_ORG } = body;
 
     // Get the deal with property
     const deal = await prisma.deal.findFirst({

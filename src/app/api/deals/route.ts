@@ -1,3 +1,4 @@
+import { DEFAULT_ORG } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { parsePagination } from "@/lib/utils";
@@ -7,7 +8,7 @@ import { createDealSchema } from "@/lib/schemas";
 // GET /api/deals — list deals
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const orgId = searchParams.get("orgId") || "default";
+  const orgId = searchParams.get("orgId") || DEFAULT_ORG;
   const pipelineId = searchParams.get("pipelineId");
   const status = searchParams.get("status");
   const { limit, offset } = parsePagination(
