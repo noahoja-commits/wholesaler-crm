@@ -1,0 +1,648 @@
+// Wholesaler CRM — PostgreSQL Schema
+// Real estate wholesale: motivated sellers → deals → cash buyers
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── User & Organization ───────────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users     OrganizationUser[]
+  contacts  Contact[]
+  properties Property[]
+  deals     Deal[]
+  campaigns Campaign[]
+  templates DocumentTemplate[]
+  pipelines Pipeline[]
+  dataSources DataSource[]
+
+  @@map("organizations")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  passwordHash  String   @map("password_hash")
+  role          UserRole @default(USER)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  organizations OrganizationUser[]
+  assignedTasks Task[]
+
+  @@map("users")
+}
+
+model OrganizationUser {
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  userId         String       @map("user_id")
+  role           OrgRole      @default(MEMBER)
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@map("organization_users")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+// ─── Contacts ────────────────────────────────────────────────────────
+
+model Contact {
+  id             String        @id @default(cuid())
+  organizationId String        @map("organization_id")
+  firstName      String        @map("first_name")
+  lastName       String        @map("last_name")
+  email          String?
+  phone          String?
+  phone2         String?
+  type           ContactType   @default(SELLER)
+  status         ContactStatus @default(ACTIVE)
+  tags           String[]      @default([])
+  notes          String?
+  source         LeadSource?
+  
+  // Mailing address
+  street         String?
+  city           String?
+  state          String?
+  zip            String?
+  
+  // Skip-trace data
+  skipTraced     Boolean       @default(false) @map("skip_traced")
+  skipTraceData  Json?         @map("skip_trace_data")
+  
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  properties        Property[]
+  dealsAsSeller     Deal[]             @relation("SellerDeals")
+  dealsAsBuyer      Deal[]             @relation("BuyerDeals")
+  tasks             Task[]
+  activities        Activity[]
+  campaignRecipients CampaignRecipient[]
+  buyerPreferences  BuyerPreference[]
+
+  @@map("contacts")
+
+  @@index([organizationId])
+  @@index([organizationId, type])
+  @@index([organizationId, status])
+  @@index([email])
+  @@index([phone])
+}
+
+enum ContactType {
+  SELLER
+  BUYER
+  AGENT
+  TITLE_COMPANY
+  HARD_MONEY
+  OTHER
+}
+
+enum ContactStatus {
+  ACTIVE
+  INACTIVE
+  DO_NOT_CONTACT
+  CLOSED
+}
+
+enum LeadSource {
+  DIRECT_MAIL
+  COLD_CALL
+  SMS
+  ONLINE_AD
+  REFERRAL
+  DRIVING_FOR_DOLLARS
+  MLS
+  PROPSTREAM
+  BATCH_LEADS
+  COUNTY_RECORDS
+  OTHER
+}
+
+// ─── Properties ──────────────────────────────────────────────────────
+
+model Property {
+  id             String         @id @default(cuid())
+  organizationId String         @map("organization_id")
+  contactId      String?        @map("contact_id") // owner contact
+  
+  street         String
+  city           String
+  state          String
+  zip            String
+  county         String?
+  
+  propertyType   PropertyType   @default(SINGLE_FAMILY) @map("property_type")
+  beds           Int?
+  baths          Float?
+  sqft           Int?
+  lotSqft        Int?           @map("lot_sqft")
+  yearBuilt      Int?           @map("year_built")
+  
+  // Valuation
+  estimatedValue Decimal?       @map("estimated_value")
+  arv             Decimal?      // After Repair Value
+  repairCost     Decimal?       @map("repair_cost")
+  mao            Decimal?       // Maximum Allowable Offer (70% ARV - repairs)
+  
+  // Status
+  status         PropertyStatus @default(NEW_LEAD)
+  
+  // Public record data
+  lastSaleDate    DateTime?     @map("last_sale_date")
+  lastSalePrice   Decimal?      @map("last_sale_price")
+  taxAssessedValue Decimal?     @map("tax_assessed_value")
+  annualTaxes     Decimal?      @map("annual_taxes")
+  lienAmount      Decimal?      @map("lien_amount")
+  foreclosureStatus ForeclosureStatus? @map("foreclosure_status")
+  
+  // Our data
+  notes          String?
+  photos         String[]       @default([])
+  
+  latitude       Float?
+  longitude      Float?
+  
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contact        Contact?       @relation(fields: [contactId], references: [id])
+  deals          Deal[]
+  tasks          Task[]
+  importLogs     PropertyImportLog[]
+
+  @@map("properties")
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([organizationId, foreclosureStatus])
+  @@index([contactId])
+  @@index([street, zip])
+}
+
+enum PropertyType {
+  SINGLE_FAMILY
+  MULTI_FAMILY
+  CONDO
+  TOWNHOUSE
+  LAND
+  COMMERCIAL
+  MOBILE_HOME
+}
+
+enum PropertyStatus {
+  NEW_LEAD
+  CONTACTED
+  APPOINTMENT_SCHEDULED
+  APPOINTMENT_DONE
+  OFFER_MADE
+  UNDER_CONTRACT
+  CLOSED
+  DEAD_LEAD
+  NURTURE
+}
+
+enum ForeclosureStatus {
+  PRE_FORECLOSURE
+  AUCTION_SCHEDULED
+  AUCTION_POSTPONED
+  BANK_OWNED
+  SHORT_SALE
+  NONE
+}
+
+// ─── Pipelines & Deals ──────────────────────────────────────────────
+
+model Pipeline {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  name           String
+  description    String?
+  stages         Stage[]   // ordered list of stage configs
+  isDefault      Boolean   @default(false) @map("is_default")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deals          Deal[]
+
+  @@map("pipelines")
+}
+
+model Deal {
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  pipelineId     String       @map("pipeline_id")
+  propertyId     String       @map("property_id")
+  sellerId       String       @map("seller_id") // contact id of seller
+  buyerId        String?      @map("buyer_id")  // contact id of assigned cash buyer
+
+  title          String
+  currentStage   String       @default("lead") @map("current_stage")
+  
+  // Financials
+  offerPrice     Decimal?     @map("offer_price")
+  contractPrice  Decimal?     @map("contract_price")
+  assignmentFee  Decimal?     @map("assignment_fee")
+  emd            Decimal?     // Earnest Money Deposit
+  closingDate    DateTime?    @map("closing_date")
+  
+  // Deal type
+  dealType       DealType     @default(WHOLESALE) @map("deal_type")
+  
+  status         DealStatus   @default(ACTIVE)
+  priority       Priority     @default(MEDIUM)
+  
+  notes          String?
+  
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  pipeline       Pipeline     @relation(fields: [pipelineId], references: [id])
+  property       Property     @relation(fields: [propertyId], references: [id])
+  seller         Contact      @relation("SellerDeals", fields: [sellerId], references: [id])
+  buyer          Contact?     @relation("BuyerDeals", fields: [buyerId], references: [id])
+  activities     Activity[]
+  tasks          Task[]
+  documents      Document[]
+
+  @@map("deals")
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([organizationId, currentStage])
+  @@index([pipelineId])
+  @@index([sellerId])
+  @@index([propertyId])
+}
+
+model Stage {
+  id          String @id @default(cuid())
+  pipelineId  String @map("pipeline_id")
+  name        String
+  order       Int
+  color       String  @default("#6b7280")
+  description String?
+
+  pipeline    Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+
+  @@map("stages")
+}
+
+enum DealType {
+  WHOLESALE
+  WHOLE_TAIL
+  FIX_AND_FLIP
+  BUY_AND_HOLD
+  NOVATION
+}
+
+enum DealStatus {
+  ACTIVE
+  WON
+  LOST
+  ON_HOLD
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ─── Activities & Tasks ──────────────────────────────────────────────
+
+model Activity {
+  id        String       @id @default(cuid())
+  dealId    String       @map("deal_id")
+  type      ActivityType
+  subject   String
+  body      String?
+  contactId String?      @map("contact_id")
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  deal      Deal         @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  contact   Contact?     @relation(fields: [contactId], references: [id])
+
+  @@map("activities")
+
+  @@index([dealId])
+}
+
+enum ActivityType {
+  NOTE
+  CALL
+  EMAIL
+  SMS
+  MEETING
+  STATUS_CHANGE
+  DOCUMENT
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  dealId      String?   @map("deal_id")
+  contactId   String?   @map("contact_id")
+  propertyId  String?   @map("property_id")
+  assignedTo  String?   @map("assigned_to") // userId
+
+  title       String
+  description String?
+  dueDate     DateTime? @map("due_date")
+  priority    Priority  @default(MEDIUM)
+  status      TaskStatus @default(TODO)
+  category    TaskCategory @default(FOLLOW_UP)
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  completedAt DateTime? @map("completed_at")
+
+  deal        Deal?     @relation(fields: [dealId], references: [id])
+  contact     Contact?  @relation(fields: [contactId], references: [id])
+  property    Property? @relation(fields: [propertyId], references: [id])
+  assignee    User?     @relation(fields: [assignedTo], references: [id])
+
+  @@map("tasks")
+
+  @@index([dealId])
+  @@index([contactId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([dueDate])
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  BLOCKED
+}
+
+enum TaskCategory {
+  FOLLOW_UP
+  CALL
+  SEND_CONTRACT
+  INSPECTION
+  CLOSING
+  MARKETING
+  ADMIN
+  OTHER
+}
+
+// ─── Marketing Campaigns ────────────────────────────────────────────
+
+model Campaign {
+  id             String         @id @default(cuid())
+  organizationId String         @map("organization_id")
+  name           String
+  type           CampaignType
+  status         CampaignStatus @default(DRAFT)
+  
+  // Targeting
+  targetFilters  Json?          @map("target_filters") // e.g. { states: ["TX"], foreclosureStatus: "PRE_FORECLOSURE" }
+  
+  // Content
+  subjectLine    String?        @map("subject_line")   // for email
+  bodyTemplate   String?        @map("body_template")  // template with {{variables}}
+  
+  // Scheduling
+  scheduledAt    DateTime?      @map("scheduled_at")
+  startedAt      DateTime?      @map("started_at")
+  completedAt    DateTime?      @map("completed_at")
+  
+  // Stats
+  totalSent      Int            @default(0) @map("total_sent")
+  totalOpened    Int            @default(0) @map("total_opened")
+  totalReplied   Int            @default(0) @map("total_replied")
+  
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  recipients     CampaignRecipient[]
+
+  @@map("campaigns")
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+}
+
+enum CampaignType {
+  DIRECT_MAIL
+  EMAIL
+  SMS
+  RINGLESS_VOICEMAIL
+  MULTI_CHANNEL
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  PAUSED
+  CANCELLED
+}
+
+model CampaignRecipient {
+  id          String        @id @default(cuid())
+  campaignId  String        @map("campaign_id")
+  contactId   String        @map("contact_id")
+  propertyId  String?       @map("property_id")
+  
+  status      RecipientStatus @default(PENDING)
+  sentAt      DateTime?     @map("sent_at")
+  openedAt    DateTime?     @map("opened_at")
+  repliedAt   DateTime?     @map("replied_at")
+  errorMessage String?      @map("error_message")
+
+  campaign    Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contact     Contact       @relation(fields: [contactId], references: [id])
+
+  @@unique([campaignId, contactId])
+  @@map("campaign_recipients")
+
+  @@index([campaignId])
+  @@index([contactId])
+}
+
+enum RecipientStatus {
+  PENDING
+  SENT
+  OPENED
+  REPLIED
+  BOUNCED
+  FAILED
+  OPTED_OUT
+}
+
+// ─── Documents ─────────────────────────────────────────────────────
+
+model DocumentTemplate {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  name           String
+  type           DocumentType
+  content        String   // HTML/Markdown template with {{variables}}
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  documents      Document[]
+
+  @@map("document_templates")
+}
+
+model Document {
+  id         String       @id @default(cuid())
+  dealId     String       @map("deal_id")
+  templateId String?      @map("template_id")
+  name       String
+  type       DocumentType
+  content    String       // Rendered document
+  signed     Boolean      @default(false)
+  signedAt   DateTime?    @map("signed_at")
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  deal       Deal         @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  template   DocumentTemplate? @relation(fields: [templateId], references: [id])
+
+  @@map("documents")
+
+  @@index([dealId])
+}
+
+enum DocumentType {
+  PURCHASE_AGREEMENT
+  ASSIGNMENT_CONTRACT
+  AFFIDAVIT
+  DISCLOSURE
+  INVOICE
+  MARKETING_LETTER
+  PROOF_OF_FUNDS
+  OTHER
+}
+
+// ─── Data Pipeline / Property Import ─────────────────────────────────
+
+model DataSource {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  name           String
+  type           DataSourceType
+  config         Json      // Connection config
+  enabled        Boolean   @default(true)
+  lastRunAt      DateTime? @map("last_run_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  importLogs     PropertyImportLog[]
+
+  @@map("data_sources")
+}
+
+enum DataSourceType {
+  COUNTY_API
+  CSV_IMPORT
+  WEBHOOK
+  ZAPIER
+  MANUAL
+}
+
+model PropertyImportLog {
+  id           String    @id @default(cuid())
+  dataSourceId String    @map("data_source_id")
+  propertyId   String    @map("property_id")
+  status       ImportStatus @default(SUCCESS)
+  rawData      Json?     @map("raw_data")
+  errorMessage String?   @map("error_message")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  dataSource   DataSource @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+  property     Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_import_logs")
+}
+
+enum ImportStatus {
+  SUCCESS
+  DUPLICATE
+  ERROR
+  SKIPPED
+}
+
+// ─── Buyer Preferences (for deal matching) ───────────────────────────
+
+model BuyerPreference {
+  id          String   @id @default(cuid())
+  contactId   String   @unique @map("contact_id")
+  
+  // Location filter
+  states      String[] @default([])
+  counties    String[] @default([])
+  cities      String[] @default([])
+  zipCodes    String[] @map("zip_codes")
+  
+  // Property filter
+  minBeds     Int?
+  maxBeds     Int?
+  minBaths    Float?
+  maxBaths    Float?
+  minSqft     Int?
+  maxSqft     Int?
+  propertyTypes PropertyType[] @default([]) @map("property_types")
+  
+  // Financial filter
+  minPrice    Decimal?
+  maxPrice    Decimal?
+  maxArv      Decimal?  @map("max_arv")
+  minEquityPercent Float? @map("min_equity_percent")
+  
+  // Deal type
+  dealTypes   DealType[] @default([WHOLESALE]) @map("deal_types")
+  
+  // Preferences
+  acceptsMultiFamily Boolean @default(false) @map("accepts_multi_family")
+  maxRepairCost      Decimal? @map("max_repair_cost")
+  
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@map("buyer_preferences")
+}
