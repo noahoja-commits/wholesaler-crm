@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { Search, Plus, Home } from "lucide-react";
+import { Search, Plus, Home, Trash2 } from "lucide-react";
 import { useApi, useDebounce } from "@/lib/hooks";
 import { PropertyForm } from "@/components/PropertyForm";
 import { formatCurrency } from "@/lib/utils";
@@ -22,6 +22,12 @@ export default function PropertiesPage() {
   const { data, loading, refetch } = useApi<{ properties: Property[]; total: number }>(url);
   const properties = data?.properties || [];
   const handleCreated = useCallback(() => refetch(), [refetch]);
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this property?")) return;
+    await fetch(`/api/properties/${id}`, { method: "DELETE" });
+    refetch();
+  }
 
   return (
     <div className="space-y-4 max-w-7xl">
@@ -51,7 +57,12 @@ export default function PropertiesPage() {
                   </div>
                   <span className="text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider">{property.propertyType.replace("_", " ")}</span>
                 </div>
-                <span className={`badge text-[10px] ${PROPERTY_STATUS_COLORS[property.status] || "badge-muted"}`}>{property.status.replace("_", " ")}</span>
+                <div className="flex items-center gap-1">
+                  <span className={`badge text-[10px] ${PROPERTY_STATUS_COLORS[property.status] || "badge-muted"}`}>{property.status.replace("_", " ")}</span>
+                  <button onClick={(e) => { e.stopPropagation(); handleDelete(property.id); }} className="p-1 rounded-md text-[var(--color-text-tertiary)] hover:text-red-400 hover:bg-red-400/10 transition-colors">
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
               </div>
               <h3 className="font-semibold text-sm mb-1 text-[var(--color-text-primary)]">{property.street}</h3>
               <p className="text-xs text-[var(--color-text-tertiary)] mb-4">{property.city}, {property.state} {property.zip}</p>

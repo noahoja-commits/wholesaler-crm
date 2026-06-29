@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { Search, Plus, Phone, Mail, MapPin, Filter } from "lucide-react";
+import { Search, Plus, Phone, Mail, MapPin, Filter, Trash2 } from "lucide-react";
 import { useApi, useDebounce } from "@/lib/hooks";
 import { ContactForm } from "@/components/ContactForm";
 import type { Contact } from "@/types";
@@ -21,6 +21,12 @@ export default function ContactsPage() {
   const contacts = data?.contacts || [];
 
   const handleCreated = useCallback(() => refetch(), [refetch]);
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this contact?")) return;
+    await fetch(`/api/contacts/${id}`, { method: "DELETE" });
+    refetch();
+  }
 
   return (
     <div className="space-y-4 max-w-7xl">
@@ -57,6 +63,7 @@ export default function ContactsPage() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider">Location</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider">Status</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider">Source</th>
+                <th className="w-10"></th>
               </tr>
             </thead>
             <tbody>
@@ -68,6 +75,11 @@ export default function ContactsPage() {
                   <td className="px-4 py-3 text-xs text-[var(--color-text-tertiary)]">{contact.city && (<span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{contact.city}, {contact.state}</span>)}</td>
                   <td className="px-4 py-3"><span className={contact.status === "ACTIVE" ? "badge badge-accent" : contact.status === "DO_NOT_CONTACT" ? "badge bg-red-400/10 text-red-400" : "badge badge-muted"}>{contact.status.replace("_", " ")}</span></td>
                   <td className="px-4 py-3 text-xs text-[var(--color-text-tertiary)]">{contact.source?.replace("_", " ") || "—"}</td>
+                  <td className="px-2 py-3">
+                    <button onClick={() => handleDelete(contact.id)} className="p-1.5 rounded-md text-[var(--color-text-tertiary)] hover:text-red-400 hover:bg-red-400/10 transition-colors">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
