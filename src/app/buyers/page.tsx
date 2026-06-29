@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Plus, Phone, Mail, Radio, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Plus, Phone, Mail, Radio, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { useApi, useDebounce } from "@/lib/hooks";
+import { BuyerForm } from "@/components/BuyerForm";
 import type { Contact } from "@/types";
 
 interface BuyerWithPrefs extends Contact {
@@ -18,9 +19,10 @@ interface BuyerWithPrefs extends Contact {
 export default function BuyersPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
+  const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const { data, loading } = useApi<{ buyers: BuyerWithPrefs[] }>("/api/buyers?orgId=default");
+  const { data, loading, refetch } = useApi<{ buyers: BuyerWithPrefs[] }>("/api/buyers?orgId=org_demo");
   const buyers = data?.buyers || [];
 
   const filtered = useMemo(() => {
@@ -43,12 +45,8 @@ export default function BuyersPage() {
           <p className="text-sm text-zinc-500 mt-1">{filtered.length} cash buyers</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="inline-flex items-center gap-2 px-3 py-2 text-sm bg-emerald-600 text-white font-medium rounded-md hover:bg-emerald-500 transition-colors">
-            <Radio className="h-4 w-4" /> Broadcast Deal
-          </button>
-          <button className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black text-sm font-medium rounded-md hover:bg-zinc-200 transition-colors">
-            <Plus className="h-4 w-4" /> Add Buyer
-          </button>
+          <button className="btn-primary"><Radio className="h-4 w-4" /> Broadcast Deal</button>
+          <button className="btn-primary" onClick={() => setShowForm(true)}><Plus className="h-4 w-4" /> Add Buyer</button>
         </div>
       </div>
 
@@ -110,6 +108,7 @@ export default function BuyersPage() {
           {filtered.length === 0 && <div className="py-12 text-center text-sm text-zinc-600">No buyers found.</div>}
         </div>
       )}
+      <BuyerForm open={showForm} onClose={() => setShowForm(false)} onCreated={() => refetch()} />
     </div>
   );
 }
