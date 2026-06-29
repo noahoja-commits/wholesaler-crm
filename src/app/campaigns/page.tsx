@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useApi } from "@/lib/hooks";
 import { Plus, BarChart3, Mail, MessageSquare, Voicemail } from "lucide-react";
+import { CampaignForm } from "@/components/CampaignForm";
 
 interface Campaign {
   id: string; name: string; type: string; status: string;
@@ -19,8 +21,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function CampaignsPage() {
-  const { data, loading } = useApi<{ campaigns: Campaign[] }>("/api/campaigns?orgId=org_demo");
+  const { data, loading, refetch } = useApi<{ campaigns: Campaign[] }>("/api/campaigns?orgId=org_demo");
   const campaigns = data?.campaigns || [];
+  const [showForm, setShowForm] = useState(false);
 
   if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-pulse text-zinc-500">Loading campaigns...</div></div>;
 
@@ -28,7 +31,7 @@ export default function CampaignsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div><h2 className="text-2xl font-bold">Campaigns</h2><p className="text-sm text-zinc-500 mt-1">Direct mail, SMS, email drip campaigns</p></div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black text-sm font-medium rounded-md hover:bg-zinc-200 transition-colors"><Plus className="h-4 w-4" /> New Campaign</button>
+        <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black text-sm font-medium rounded-md hover:bg-zinc-200 transition-colors"><Plus className="h-4 w-4" /> New Campaign</button>
       </div>
 
       {campaigns.length === 0 ? (
@@ -36,7 +39,7 @@ export default function CampaignsPage() {
           <BarChart3 className="h-8 w-8 text-zinc-600 mx-auto mb-3" />
           <h3 className="text-sm font-medium text-zinc-400">No campaigns yet</h3>
           <p className="text-xs text-zinc-600 mt-1 mb-4">Create your first marketing campaign to reach motivated sellers</p>
-          <button className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black text-sm font-medium rounded-md hover:bg-zinc-200 transition-colors"><Plus className="h-4 w-4" /> Create Campaign</button>
+          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black text-sm font-medium rounded-md hover:bg-zinc-200 transition-colors"><Plus className="h-4 w-4" /> Create Campaign</button>
         </div>
       ) : (
         <div className="space-y-3">
@@ -63,6 +66,8 @@ export default function CampaignsPage() {
           })}
         </div>
       )}
+
+      <CampaignForm open={showForm} onClose={() => setShowForm(false)} onCreated={() => refetch()} />
     </div>
   );
 }

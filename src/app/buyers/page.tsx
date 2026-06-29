@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Search, Plus, Phone, Mail, Radio, ChevronDown, ChevronUp } from "lucide-react";
 import { useApi, useDebounce } from "@/lib/hooks";
 import { BuyerForm } from "@/components/BuyerForm";
+import { BroadcastForm } from "@/components/BroadcastForm";
 import type { Contact } from "@/types";
 
 interface BuyerWithPrefs extends Contact {
@@ -20,6 +21,7 @@ export default function BuyersPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [showForm, setShowForm] = useState(false);
+  const [showBroadcast, setShowBroadcast] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { data, loading, refetch } = useApi<{ buyers: BuyerWithPrefs[] }>("/api/buyers?orgId=org_demo");
@@ -45,7 +47,7 @@ export default function BuyersPage() {
           <p className="text-sm text-zinc-500 mt-1">{data?.buyers?.length ?? 0} cash buyers</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="btn-primary"><Radio className="h-4 w-4" /> Broadcast Deal</button>
+          <button className="btn-primary" onClick={() => setShowBroadcast(true)}><Radio className="h-4 w-4" /> Broadcast Deal</button>
           <button className="btn-primary" onClick={() => setShowForm(true)}><Plus className="h-4 w-4" /> Add Buyer</button>
         </div>
       </div>
@@ -109,6 +111,7 @@ export default function BuyersPage() {
         </div>
       )}
       <BuyerForm open={showForm} onClose={() => setShowForm(false)} onCreated={() => refetch()} />
+      <BroadcastForm open={showBroadcast} onClose={() => setShowBroadcast(false)} />
     </div>
   );
 }
