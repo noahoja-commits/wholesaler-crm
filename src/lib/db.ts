@@ -6,8 +6,10 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
+  const url = new URL(process.env.DATABASE_URL!);
+  url.searchParams.set("uselibpqcompat", "true");
   return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
+    adapter: new PrismaPg({ connectionString: url.toString() }),
   });
 }
 
