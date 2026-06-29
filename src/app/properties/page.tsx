@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Search, Plus, Home } from "lucide-react";
 import { useApi, useDebounce } from "@/lib/hooks";
+import { PropertyForm } from "@/components/PropertyForm";
 import { formatCurrency } from "@/lib/utils";
 import { PROPERTY_STATUS_COLORS } from "@/lib/constants";
 import type { Property } from "@/types";
 
 export default function PropertiesPage() {
   const [search, setSearch] = useState("");
+  const [showForm, setShowForm] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
   const url = useMemo(() => {
@@ -17,8 +19,9 @@ export default function PropertiesPage() {
     return `/api/properties?${params}`;
   }, [debouncedSearch]);
 
-  const { data, loading } = useApi<{ properties: Property[]; total: number }>(url);
+  const { data, loading, refetch } = useApi<{ properties: Property[]; total: number }>(url);
   const properties = data?.properties || [];
+  const handleCreated = useCallback(() => refetch(), [refetch]);
 
   return (
     <div className="space-y-4 max-w-7xl">
@@ -27,7 +30,7 @@ export default function PropertiesPage() {
           <h2 className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">Properties</h2>
           <p className="text-sm text-[var(--color-text-tertiary)] mt-1">{data?.total ?? properties.length} properties</p>
         </div>
-        <button className="btn-primary"><Plus className="h-4 w-4" /> Add Property</button>
+        <button className="btn-primary" onClick={() => setShowForm(true)}><Plus className="h-4 w-4" /> Add Property</button>
       </div>
 
       <div className="relative max-w-md">
@@ -70,6 +73,7 @@ export default function PropertiesPage() {
           ))}
         </div>
       )}
+      <PropertyForm open={showForm} onClose={() => setShowForm(false)} onCreated={handleCreated} />
     </div>
   );
 }

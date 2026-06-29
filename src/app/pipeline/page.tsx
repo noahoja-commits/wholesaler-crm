@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useApi } from "@/lib/hooks";
+import { DealForm } from "@/components/DealForm";
 import { Plus, MoreHorizontal, MapPin, User, ArrowRight } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { STAGE_COLORS, PIPELINE_STAGES } from "@/lib/constants";
@@ -57,9 +58,11 @@ function PipelineColumn({ stage, deals, count }: { stage: string; deals: Deal[];
 }
 
 export default function PipelinePage() {
-  const { data, loading } = useApi<{ deals: Deal[]; total: number }>("/api/deals?orgId=org_demo&limit=200");
+  const [showForm, setShowForm] = useState(false);
+  const { data, loading, refetch } = useApi<{ deals: Deal[]; total: number }>("/api/deals?orgId=org_demo&limit=200");
   const deals = data?.deals || [];
   const totalDeals = deals.length;
+  const handleCreated = useCallback(() => refetch(), [refetch]);
 
   const stageGroups = useMemo(() => {
     const groups = new Map<string, Deal[]>();
@@ -82,13 +85,14 @@ export default function PipelinePage() {
           <h2 className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">Pipeline</h2>
           <p className="text-sm text-[var(--color-text-tertiary)] mt-1">{totalDeals} deals across {PIPELINE_STAGES.length} stages</p>
         </div>
-        <button className="btn-primary"><Plus className="h-4 w-4" /> Add Deal</button>
+        <button className="btn-primary" onClick={() => setShowForm(true)}><Plus className="h-4 w-4" /> Add Deal</button>
       </div>
       <div className="flex-1 flex gap-4 overflow-x-auto pb-4">
         {PIPELINE_STAGES.map((stage) => (
           <PipelineColumn key={stage} stage={stage} deals={stageGroups.get(stage) || []} count={totalDeals} />
         ))}
       </div>
+      <DealForm open={showForm} onClose={() => setShowForm(false)} onCreated={handleCreated} />
     </div>
   );
 }

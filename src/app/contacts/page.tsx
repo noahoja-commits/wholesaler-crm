@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Search, Plus, Phone, Mail, MapPin, Filter } from "lucide-react";
 import { useApi, useDebounce } from "@/lib/hooks";
+import { ContactForm } from "@/components/ContactForm";
 import type { Contact } from "@/types";
 
 export default function ContactsPage() {
   const [search, setSearch] = useState("");
+  const [showForm, setShowForm] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
   const url = useMemo(() => {
@@ -15,8 +17,10 @@ export default function ContactsPage() {
     return `/api/contacts?${params}`;
   }, [debouncedSearch]);
 
-  const { data, loading } = useApi<{ contacts: Contact[]; total: number }>(url);
+  const { data, loading, refetch } = useApi<{ contacts: Contact[]; total: number }>(url);
   const contacts = data?.contacts || [];
+
+  const handleCreated = useCallback(() => refetch(), [refetch]);
 
   return (
     <div className="space-y-4 max-w-7xl">
@@ -25,7 +29,7 @@ export default function ContactsPage() {
           <h2 className="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">Contacts</h2>
           <p className="text-sm text-[var(--color-text-tertiary)] mt-1">{data?.total ?? contacts.length} contacts</p>
         </div>
-        <button className="btn-primary"><Plus className="h-4 w-4" /> Add Contact</button>
+        <button className="btn-primary" onClick={() => setShowForm(true)}><Plus className="h-4 w-4" /> Add Contact</button>
       </div>
 
       <div className="flex items-center gap-3">
@@ -71,6 +75,7 @@ export default function ContactsPage() {
           {contacts.length === 0 && <div className="py-16 text-center text-sm text-[var(--color-text-tertiary)]">No contacts found</div>}
         </div>
       )}
+      <ContactForm open={showForm} onClose={() => setShowForm(false)} onCreated={handleCreated} />
     </div>
   );
 }
