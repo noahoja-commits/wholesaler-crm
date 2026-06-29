@@ -37,7 +37,9 @@ export function parsePagination(
   offsetRaw: string | null,
   maxLimit = 100
 ): { limit: number; offset: number } {
-  const limit = Number.isFinite(Number(limitRaw)) ? Math.max(1, Math.min(parseInt(limitRaw!), maxLimit)) : 50;
-  const offset = Number.isFinite(Number(offsetRaw)) ? Math.max(0, parseInt(offsetRaw!)) : 0;
+  const limitNum = limitRaw != null ? parseInt(limitRaw, 10) : NaN;
+  const offsetNum = offsetRaw != null ? parseInt(offsetRaw, 10) : NaN;
+  const limit = Number.isFinite(limitNum) ? Math.max(1, Math.min(limitNum, maxLimit)) : 50;
+  const offset = Number.isFinite(offsetNum) ? Math.max(0, offsetNum) : 0;
   return { limit, offset };
 }
