@@ -33,37 +33,54 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-60 border-r border-zinc-800 bg-zinc-950 flex flex-col">
-      <div className="h-14 flex items-center px-4 border-b border-zinc-800">
+    <aside className="w-60 border-r border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col">
+      {/* Brand */}
+      <div className="h-14 flex items-center gap-3 px-4 border-b border-[var(--color-border)]">
+        <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center">
+          <Building2 className="h-3.5 w-3.5 text-black" />
+        </div>
         <h1 className="font-bold text-sm tracking-tight">
-          <span className="text-emerald-400">Whole</span>
-          <span className="text-zinc-100">CRM</span>
+          <span className="gradient-text">Whole</span>
+          <span className="text-[var(--color-text-primary)]">CRM</span>
         </h1>
       </div>
-      <nav className="flex-1 p-3 space-y-1">
+
+      {/* Navigation */}
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {navigation.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           return (
             <Link
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 group",
                 isActive
-                  ? "bg-zinc-800 text-white"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                  ? "bg-[var(--color-accent-glow)] text-emerald-400 font-medium"
+                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
               )}
             >
-              <item.icon className="h-4 w-4" />
+              <item.icon className={cn("h-4 w-4 transition-colors", isActive ? "text-emerald-400" : "text-[var(--color-text-tertiary)] group-hover:text-[var(--color-text-secondary)]")} />
               {item.name}
+              {isActive && (
+                <div className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              )}
             </Link>
           );
         })}
       </nav>
-      <div className="p-3 border-t border-zinc-800">
-        <div className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-500">
-          <div className="h-2 w-2 rounded-full bg-emerald-400" />
-          Default Org
+
+      {/* Footer */}
+      <div className="p-3 border-t border-[var(--color-border)]">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[var(--color-surface-elevated)] border border-[var(--color-border)]">
+          <div className="relative">
+            <div className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+            <div className="absolute inset-0 h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse-ring" />
+          </div>
+          <div className="text-xs">
+            <p className="font-medium text-[var(--color-text-primary)]">Sunbelt Wholesale</p>
+            <p className="text-[var(--color-text-tertiary)]">Connected · Live</p>
+          </div>
         </div>
       </div>
     </aside>
