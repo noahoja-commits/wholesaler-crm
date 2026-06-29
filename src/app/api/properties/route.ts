@@ -4,6 +4,7 @@ import prisma from "@/lib/db";
 import { parsePagination } from "@/lib/utils";
 import { validateBody } from "@/lib/validate";
 import { createPropertySchema } from "@/lib/schemas";
+import type { Prisma } from "@prisma/client";
 
 // GET /api/properties — list all properties for org
 export async function GET(request: NextRequest) {
@@ -16,8 +17,8 @@ export async function GET(request: NextRequest) {
     searchParams.get("offset")
   );
 
-  const where: Record<string, unknown> = { organizationId: orgId };
-  if (status) where.status = status;
+  const where: Prisma.PropertyWhereInput = { organizationId: orgId };
+  if (status) where.status = status as Prisma.PropertyWhereInput["status"];
   if (search) {
     where.OR = [
       { street: { contains: search, mode: "insensitive" } },
@@ -29,13 +30,13 @@ export async function GET(request: NextRequest) {
   try {
     const [properties, total] = await Promise.all([
       prisma.property.findMany({
-        where: where as any,
+        where,
         skip: offset,
         take: limit,
         orderBy: { createdAt: "desc" },
         include: { contact: true },
       }),
-      prisma.property.count({ where: where as any }),
+      prisma.property.count({ where }),
     ]);
     return NextResponse.json({ properties, total, limit, offset });
   } catch (error) {

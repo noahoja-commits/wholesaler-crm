@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import { useApi } from "@/lib/hooks";
 import { DealForm } from "@/components/DealForm";
-import { Plus, MoreHorizontal, MapPin, User, ArrowRight, Trash2 } from "lucide-react";
+import { Plus, MapPin, User, ArrowRight, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { STAGE_COLORS, PIPELINE_STAGES } from "@/lib/constants";
 import type { Deal } from "@/types";
 
-function DealCard({ deal, onDelete }: { deal: Deal; onDelete: (id: string) => void }) {
+const DealCard = memo(function DealCard({ deal, onDelete }: { deal: Deal; onDelete: (id: string) => void }) {
   const stageColor = STAGE_COLORS[deal.currentStage] || "#6b7280";
   return (
-    <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg p-3.5 cursor-pointer hover:border-[var(--color-border-light)] hover:shadow-lg transition-all duration-150">
+    <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg p-3.5 hover:border-[var(--color-border-light)] hover:shadow-lg transition-all duration-150">
       <div className="flex items-center justify-between mb-2">
         <span className="text-[10px] font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider">{deal.dealType.replace("_", " ")}</span>
         <button onClick={(e) => { e.stopPropagation(); onDelete(deal.id); }} className="text-[var(--color-text-tertiary)] hover:text-red-400 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
@@ -31,11 +31,10 @@ function DealCard({ deal, onDelete }: { deal: Deal; onDelete: (id: string) => vo
       </div>
     </div>
   );
-}
+});
 
-function PipelineColumn({ stage, deals, count, onDelete }: { stage: string; deals: Deal[]; count: number; onDelete: (id: string) => void }) {
+const PipelineColumn = memo(function PipelineColumn({ stage, deals, onDelete }: { stage: string; deals: Deal[]; onDelete: (id: string) => void }) {
   const stageColor = STAGE_COLORS[stage] || "#6b7280";
-  const pct = count > 0 ? (deals.length / count) * 100 : 0;
   return (
     <div className="flex-shrink-0 w-72 flex flex-col bg-[var(--color-surface-elevated)]/50 rounded-xl border border-[var(--color-border)]">
       <div className="p-3 flex items-center justify-between border-b border-[var(--color-border)]">
@@ -47,7 +46,7 @@ function PipelineColumn({ stage, deals, count, onDelete }: { stage: string; deal
         <button className="text-[var(--color-text-tertiary)] hover:text-emerald-400 transition-colors"><Plus className="h-4 w-4" /></button>
       </div>
       <div className="h-1 bg-[var(--color-surface-elevated)]">
-        <div className="h-full rounded-r-full transition-all duration-500" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${stageColor}, ${stageColor}88)` }} />
+        <div className="h-full rounded-r-full transition-all duration-500" style={{ width: "0%", background: `linear-gradient(90deg, ${stageColor}, ${stageColor}88)` }} />
       </div>
       <div className="flex-1 p-2 space-y-2 overflow-y-auto min-h-[200px]">
         {deals.map((deal) => <DealCard key={deal.id} deal={deal} onDelete={onDelete} />)}
@@ -55,30 +54,29 @@ function PipelineColumn({ stage, deals, count, onDelete }: { stage: string; deal
       </div>
     </div>
   );
-}
+});
 
 export default function PipelinePage() {
   const [showForm, setShowForm] = useState(false);
   const { data, loading, refetch } = useApi<{ deals: Deal[]; total: number }>("/api/deals?orgId=org_demo&limit=200");
-  const deals = data?.deals || [];
-  const totalDeals = deals.length;
+  const totalDeals = data?.deals?.length ?? 0;
   const handleCreated = useCallback(() => refetch(), [refetch]);
-
-  async function handleDelete(id: string) {
+  const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Delete this deal?")) return;
     await fetch(`/api/deals/${id}`, { method: "DELETE" });
     refetch();
-  }
+  }, [refetch]);
 
   const stageGroups = useMemo(() => {
     const groups = new Map<string, Deal[]>();
+    const deals = data?.deals || [];
     for (const stage of PIPELINE_STAGES) groups.set(stage, []);
     for (const deal of deals) {
       const group = groups.get(deal.currentStage);
       if (group) group.push(deal);
     }
     return groups;
-  }, [deals]);
+  }, [data?.deals]);
 
   if (loading) {
     return <div className="flex items-center justify-center h-full"><div className="flex flex-col items-center gap-3"><div className="h-8 w-8 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" /><span className="text-sm text-[var(--color-text-tertiary)]">Loading pipeline...</span></div></div>;
@@ -95,7 +93,7 @@ export default function PipelinePage() {
       </div>
       <div className="flex-1 flex gap-4 overflow-x-auto pb-4">
         {PIPELINE_STAGES.map((stage) => (
-          <PipelineColumn key={stage} stage={stage} deals={stageGroups.get(stage) || []} count={totalDeals} onDelete={handleDelete} />
+          <PipelineColumn key={stage} stage={stage} deals={stageGroups.get(stage) || []} onDelete={handleDelete} />
         ))}
       </div>
       <DealForm open={showForm} onClose={() => setShowForm(false)} onCreated={handleCreated} />

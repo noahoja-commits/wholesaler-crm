@@ -11,7 +11,6 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
     const [
       totalLeads,
@@ -101,6 +100,10 @@ export async function GET(request: NextRequest) {
       avgDealSize,
       leadGrowth,
       pipelineStats,
+    }, {
+      headers: {
+        "Cache-Control": "private, max-age=30, stale-while-revalidate=60",
+      },
     });
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch dashboard data", detail: String(error) }, { status: 500 });

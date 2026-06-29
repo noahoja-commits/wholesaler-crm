@@ -49,7 +49,7 @@ export default function PropertiesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {properties.map((property) => (
-            <div key={property.id} className="card-accent p-5 cursor-pointer">
+            <div key={property.id} className="card-accent p-5">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="h-7 w-7 rounded-lg bg-[var(--color-surface-hover)] flex items-center justify-center">

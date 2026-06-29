@@ -1,6 +1,7 @@
 import { DEFAULT_ORG } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 
 // POST /api/campaigns/:id/execute — add recipients to campaign based on filters
 export async function POST(
@@ -22,7 +23,7 @@ export async function POST(
 
     // Build contact query from target filters
     const filters = (campaign.targetFilters || {}) as Record<string, unknown>;
-    const where: Record<string, unknown> = {
+    const where: Prisma.ContactWhereInput = {
       organizationId: orgId,
       type: "SELLER",
       status: "ACTIVE",
@@ -40,7 +41,9 @@ export async function POST(
         },
         select: { contactId: true },
       });
-      const contactIds = matchingProps.map((p) => p.contactId).filter(Boolean);
+      const contactIds = matchingProps
+        .map((p) => p.contactId)
+        .filter((id): id is string => id !== null);
       if (contactIds.length > 0) {
         where.id = { in: contactIds };
       }
@@ -48,7 +51,7 @@ export async function POST(
 
     // Find matching contacts
     const contacts = await prisma.contact.findMany({
-      where: where as any,
+      where,
       take: 500,
     });
 

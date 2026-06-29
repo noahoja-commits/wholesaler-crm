@@ -1,9 +1,27 @@
+import { StatCardSkeleton } from "@/components/LoadingSkeleton";
+
 export default function Loading() {
   return (
-    <div className="flex items-center justify-center h-64">
-      <div className="flex items-center gap-2 text-zinc-500">
-        <div className="h-4 w-4 border-2 border-zinc-600 border-t-zinc-400 rounded-full animate-spin" />
-        <span className="text-sm">Loading...</span>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="card p-5">
+          <div className="h-5 w-32 bg-[var(--color-surface-hover)] rounded animate-pulse mb-4" />
+          <div className="space-y-3">
+            <div className="h-12 bg-[var(--color-surface-hover)] rounded animate-pulse" />
+            <div className="h-12 bg-[var(--color-surface-hover)] rounded animate-pulse" />
+            <div className="h-12 bg-[var(--color-surface-hover)] rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="card p-5">
+          <div className="h-5 w-32 bg-[var(--color-surface-hover)] rounded animate-pulse mb-4" />
+          <div className="h-48 bg-[var(--color-surface-hover)] rounded animate-pulse" />
+        </div>
       </div>
     </div>
   );

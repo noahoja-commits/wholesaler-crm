@@ -1,6 +1,7 @@
 import { DEFAULT_ORG } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 
 // GET /api/documents — list documents
 export async function GET(request: NextRequest) {
@@ -9,16 +10,15 @@ export async function GET(request: NextRequest) {
   const dealId = searchParams.get("dealId");
 
   try {
-    const where: Record<string, unknown> = {};
+    const where: Prisma.DocumentWhereInput = {};
     if (dealId) {
       where.dealId = dealId;
     } else {
-      // Use relation filter — single query, no intermediate deal ID load
       where.deal = { organizationId: orgId };
     }
 
     const documents = await prisma.document.findMany({
-      where: where as any,
+      where,
       include: { deal: true, template: true },
       orderBy: { createdAt: "desc" },
     });
@@ -49,14 +49,12 @@ export async function POST(request: NextRequest) {
     }
 
     let content = "";
-    let templateName = "Custom Document";
 
     if (templateId) {
       const template = await prisma.documentTemplate.findFirst({
         where: { id: templateId, organizationId: orgId },
       });
       if (template) {
-        templateName = template.name;
         // Replace template variables with deal data
         content = template.content
           .replace(/\{\{dealTitle\}\}/g, deal.title)

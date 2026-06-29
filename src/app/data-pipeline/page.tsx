@@ -25,7 +25,7 @@ export default function DataPipelinePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/data-sources?orgId=default")
+    fetch("/api/data-sources?orgId=org_demo")
       .then((r) => r.json())
       .then((data) => {
         setSources(data.sources || []);

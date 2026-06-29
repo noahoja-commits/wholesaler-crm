@@ -22,7 +22,7 @@ const TEMPLATES = [
 ];
 
 export default function DocumentsPage() {
-  const { data, loading } = useApi<{ documents: Document[] }>("/api/documents?orgId=default");
+  const { data, loading } = useApi<{ documents: Document[] }>("/api/documents?orgId=org_demo");
   const documents = data?.documents || [];
 
   return (

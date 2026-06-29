@@ -13,10 +13,18 @@ export async function PATCH(
       where: { id },
       data: {
         street: body.street, city: body.city, state: body.state, zip: body.zip,
-        beds: body.beds, baths: body.baths, sqft: body.sqft,
-        arv: body.arv, repairCost: body.repairCost,
+        county: body.county ?? null,
+        beds: body.beds ?? null, baths: body.baths ?? null, sqft: body.sqft ?? null,
+        lotSqft: body.lotSqft ?? null, yearBuilt: body.yearBuilt ?? null,
+        arv: body.arv ?? null, repairCost: body.repairCost ?? null,
+        estimatedValue: body.estimatedValue ?? null, mao: body.mao ?? null,
+        taxAssessedValue: body.taxAssessedValue ?? null,
+        annualTaxes: body.annualTaxes ?? null, lienAmount: body.lienAmount ?? null,
+        lastSaleDate: body.lastSaleDate ? new Date(body.lastSaleDate) : null,
+        lastSalePrice: body.lastSalePrice ?? null,
         status: body.status, propertyType: body.propertyType,
-        foreclosureStatus: body.foreclosureStatus, notes: body.notes,
+        foreclosureStatus: body.foreclosureStatus ?? null, notes: body.notes ?? null,
+        latitude: body.latitude ?? null, longitude: body.longitude ?? null,
       },
     });
     return NextResponse.json(property);

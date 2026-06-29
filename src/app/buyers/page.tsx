@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Plus, Phone, Mail, Radio, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { Search, Plus, Phone, Mail, Radio, ChevronDown, ChevronUp } from "lucide-react";
 import { useApi, useDebounce } from "@/lib/hooks";
 import { BuyerForm } from "@/components/BuyerForm";
 import type { Contact } from "@/types";
@@ -23,9 +23,9 @@ export default function BuyersPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { data, loading, refetch } = useApi<{ buyers: BuyerWithPrefs[] }>("/api/buyers?orgId=org_demo");
-  const buyers = data?.buyers || [];
 
   const filtered = useMemo(() => {
+    const buyers = data?.buyers || [];
     if (!debouncedSearch) return buyers;
     const s = debouncedSearch.toLowerCase();
     return buyers.filter(
@@ -35,14 +35,14 @@ export default function BuyersPage() {
         b.email?.toLowerCase().includes(s) ||
         b.city?.toLowerCase().includes(s)
     );
-  }, [buyers, debouncedSearch]);
+  }, [data?.buyers, debouncedSearch]);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Buyer List</h2>
-          <p className="text-sm text-zinc-500 mt-1">{filtered.length} cash buyers</p>
+          <p className="text-sm text-zinc-500 mt-1">{data?.buyers?.length ?? 0} cash buyers</p>
         </div>
         <div className="flex items-center gap-3">
           <button className="btn-primary"><Radio className="h-4 w-4" /> Broadcast Deal</button>

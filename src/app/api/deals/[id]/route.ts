@@ -14,11 +14,11 @@ export async function PATCH(
       data: {
         title: body.title, currentStage: body.currentStage,
         dealType: body.dealType, priority: body.priority,
-        offerPrice: body.offerPrice, contractPrice: body.contractPrice,
-        assignmentFee: body.assignmentFee, emd: body.emd,
+        offerPrice: body.offerPrice ?? null, contractPrice: body.contractPrice ?? null,
+        assignmentFee: body.assignmentFee ?? null, emd: body.emd ?? null,
         notes: body.notes, buyerId: body.buyerId,
         status: body.status,
-        closingDate: body.closingDate ? new Date(body.closingDate) : undefined,
+        closingDate: body.closingDate ? new Date(body.closingDate) : null,
       },
     });
     return NextResponse.json(deal);

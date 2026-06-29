@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Modal } from "@/components/Modal";
@@ -137,6 +137,17 @@ export function DealForm({ open, onClose, onCreated }: DealFormProps) {
           <div>
             <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Assignment Fee ($)</label>
             <input {...register("assignmentFee", { valueAsNumber: true })} type="number" className="input" placeholder="15000" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">EMD ($)</label>
+            <input {...register("emd", { valueAsNumber: true })} type="number" className="input" placeholder="5000" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Closing Date</label>
+            <input {...register("closingDate")} type="date" className="input" />
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useApi } from "@/lib/hooks";
 import { Plus, Trash2, GripVertical, Save } from "lucide-react";
 
@@ -22,11 +22,14 @@ export default function SettingsPage() {
   const [stages, setStages] = useState<StageData[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
-  useEffect(() => {
-    if (data?.organization) setOrgName(data.organization.name);
-    if (data?.pipeline?.stages) setStages(data.pipeline.stages);
-  }, [data]);
+  // Hydrate local state once data is available
+  if (data && !hydrated) {
+    if (data.organization) setOrgName(data.organization.name);
+    if (data.pipeline?.stages) setStages(data.pipeline.stages);
+    setHydrated(true);
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -44,6 +47,7 @@ export default function SettingsPage() {
       });
       setSaved(true);
       refetch();
+      setHydrated(false); // re-hydrate after save
       setTimeout(() => setSaved(false), 2000);
     } finally {
       setSaving(false);

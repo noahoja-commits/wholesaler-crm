@@ -10,7 +10,7 @@ interface DashboardStats {
 }
 
 export default function ReportsPage() {
-  const { data: stats, loading } = useApi<DashboardStats>("/api/dashboard?orgId=default");
+  const { data: stats, loading } = useApi<DashboardStats>("/api/dashboard?orgId=org_demo");
   const pipelineStats = stats?.pipelineStats || [];
 
   return (

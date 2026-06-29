@@ -19,7 +19,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function CampaignsPage() {
-  const { data, loading } = useApi<{ campaigns: Campaign[] }>("/api/campaigns?orgId=default");
+  const { data, loading } = useApi<{ campaigns: Campaign[] }>("/api/campaigns?orgId=org_demo");
   const campaigns = data?.campaigns || [];
 
   if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-pulse text-zinc-500">Loading campaigns...</div></div>;

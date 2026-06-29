@@ -1,29 +1,34 @@
 import { DEFAULT_ORG } from "@/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { parsePagination } from "@/lib/utils";
-import { validateBody } from "@/lib/validate";
 import { createDealSchema } from "@/lib/schemas";
+import { validateBody } from "@/lib/validate";
+import type { Prisma } from "@prisma/client";
+import { rateLimit } from "@/lib/rate-limit";
+import { sanitizeOrgId, sanitizePagination } from "@/lib/sanitize";
 
 // GET /api/deals — list deals
 export async function GET(request: NextRequest) {
+  // Rate limiting
+  const rl = rateLimit(request);
+  if (!rl.success) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "X-RateLimit-Remaining": "0" } });
+  }
+
   const { searchParams } = new URL(request.url);
-  const orgId = searchParams.get("orgId") || DEFAULT_ORG;
+  const orgId = sanitizeOrgId(searchParams.get("orgId")) || DEFAULT_ORG;
   const pipelineId = searchParams.get("pipelineId");
   const status = searchParams.get("status");
-  const { limit, offset } = parsePagination(
-    searchParams.get("limit"),
-    searchParams.get("offset")
-  );
+  const { limit, offset } = sanitizePagination(searchParams.get("limit"), searchParams.get("offset"));
 
-  const where: Record<string, unknown> = { organizationId: orgId };
+  const where: Prisma.DealWhereInput = { organizationId: orgId };
   if (pipelineId) where.pipelineId = pipelineId;
-  if (status) where.status = status;
+  if (status) where.status = status as Prisma.DealWhereInput["status"];
 
   try {
     const [deals, total] = await Promise.all([
       prisma.deal.findMany({
-        where: where as any,
+        where,
         skip: offset,
         take: limit,
         orderBy: { updatedAt: "desc" },
@@ -34,11 +39,13 @@ export async function GET(request: NextRequest) {
           pipeline: { include: { stages: { orderBy: { order: "asc" } } } },
         },
       }),
-      prisma.deal.count({ where: where as any }),
+      prisma.deal.count({ where }),
     ]);
-    return NextResponse.json({ deals, total, limit, offset });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch deals", detail: String(error) }, { status: 500 });
+    return NextResponse.json({ deals, total, limit, offset }, {
+      headers: { "X-RateLimit-Remaining": String(rl.remaining), "Cache-Control": "private, max-age=10" },
+    });
+  } catch {
+    return NextResponse.json({ error: "Failed to fetch deals" }, { status: 500 });
   }
 }
 
@@ -74,7 +81,7 @@ export async function POST(request: NextRequest) {
       },
     });
     return NextResponse.json(deal, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to create deal", detail: String(error) }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Failed to create deal" }, { status: 500 });
   }
 }

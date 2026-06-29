@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { DEFAULT_ORG } from "@/lib/constants";
 
 // GET /api/contacts/[id] — get single contact
 export async function GET(
