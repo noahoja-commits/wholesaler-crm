@@ -1,12 +1,16 @@
 // Wholesaler CRM — Demo Seed Data
 // Populates a realistic wholesaling scenario with sellers, buyers, properties, deals, pipeline, and campaigns.
 //
-// Usage: npx prisma db seed
+// Usage: npm run db:seed
 // Requires: DATABASE_URL set in .env, tables created via `npx prisma db push`
 
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
+});
 
 async function main() {
   console.log("🌱 Seeding Wholesaler CRM...\n");

@@ -1,7 +1,7 @@
 // Shared constants used across the app
 
 /** Default organization ID for single-org deployments */
-export const DEFAULT_ORG = "default";
+export const DEFAULT_ORG = "org_demo";
 
 /** Pipeline stage order and colors */
 export const PIPELINE_STAGES = [
