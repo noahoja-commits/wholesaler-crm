@@ -8,11 +8,14 @@ export async function GET(request: NextRequest) {
   const orgId = searchParams.get("orgId") || DEFAULT_ORG;
 
   try {
-    const org = await prisma.organization.findUnique({ where: { id: orgId } });
-    const pipeline = await prisma.pipeline.findFirst({
-      where: { organizationId: orgId, isDefault: true },
-      include: { stages: { orderBy: { order: "asc" } } },
-    });
+    // These two reads are independent — run them in parallel to halve latency.
+    const [org, pipeline] = await Promise.all([
+      prisma.organization.findUnique({ where: { id: orgId } }),
+      prisma.pipeline.findFirst({
+        where: { organizationId: orgId, isDefault: true },
+        include: { stages: { orderBy: { order: "asc" } } },
+      }),
+    ]);
 
     return NextResponse.json({
       organization: org,
