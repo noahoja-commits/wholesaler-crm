@@ -63,17 +63,35 @@ export async function GET(request: NextRequest) {
 
     const conversionRate = totalLeads > 0 ? wonDeals / totalLeads : 0;
 
-    // Pipeline stage breakdown
-    const deals = await prisma.deal.findMany({
-      where: { organizationId: orgId, status: "ACTIVE" },
-      include: { pipeline: { include: { stages: true } } },
-    });
+    // Pipeline stage breakdown.
+    // Fetch the active deals (only the columns we need) and the org's pipeline
+    // stages once, in parallel. This avoids re-joining the full pipeline + all
+    // stages onto every deal row and over-fetching every deal column.
+    const [deals, pipelines] = await Promise.all([
+      prisma.deal.findMany({
+        where: { organizationId: orgId, status: "ACTIVE" },
+        select: { currentStage: true, contractPrice: true, offerPrice: true, pipelineId: true },
+      }),
+      prisma.pipeline.findMany({
+        where: { organizationId: orgId },
+        select: { id: true, stages: { select: { name: true, color: true } } },
+      }),
+    ]);
+
+    // Map "<pipelineId>::<stageName>" -> color, so each deal resolves its colour
+    // against its own pipeline exactly as before.
+    const colorByPipelineStage = new Map<string, string>();
+    for (const p of pipelines) {
+      for (const s of p.stages) {
+        colorByPipelineStage.set(`${p.id}::${s.name}`, s.color);
+      }
+    }
 
     const stageMap = new Map<string, { count: number; value: number; color: string }>();
     for (const deal of deals) {
-      const stage = deal.pipeline.stages.find(s => s.name === deal.currentStage);
+      const color = colorByPipelineStage.get(`${deal.pipelineId}::${deal.currentStage}`) || "#6b7280";
       const entry = stageMap.get(deal.currentStage) || {
-        count: 0, value: 0, color: stage?.color || "#6b7280",
+        count: 0, value: 0, color,
       };
       entry.count++;
       entry.value += Number(deal.contractPrice || deal.offerPrice || 0);
